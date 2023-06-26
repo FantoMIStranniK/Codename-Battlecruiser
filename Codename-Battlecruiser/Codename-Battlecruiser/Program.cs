@@ -1,10 +1,14 @@
-﻿namespace Codename_Battlecruiser
+﻿using Codename_Battlecruiser.Engine.Base;
+
+namespace Codename_Battlecruiser
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            GameLoop gameLoop = GameLoop.InitGameLoop();
+
+            gameLoop.LaunchGame();
         }
     }
 }
