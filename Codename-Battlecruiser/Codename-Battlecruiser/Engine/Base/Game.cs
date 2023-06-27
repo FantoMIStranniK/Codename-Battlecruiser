@@ -9,16 +9,20 @@ namespace Codename_Battlecruiser.Engine.Base
 
         public static string PathToProject = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
 
-        public static Cells Cells { get; private set; }
+
+        public Player Player1 = new Player();
+        public Player Player2 = new Player();
 
         #region Init
         public void InitGame()
         {
-            Instance = this;
-            
-            Cells = new Cells();
+            Player1.BindEnemy(Player2);
+            Player2.BindEnemy(Player1);
 
-            Cells.GenerateField();
+            Instance = this;
+
+            Player1.PlayerMaps.GenerateField();
+            Player2.PlayerMaps.GenerateField();
 
             Render.InitRender();
         }

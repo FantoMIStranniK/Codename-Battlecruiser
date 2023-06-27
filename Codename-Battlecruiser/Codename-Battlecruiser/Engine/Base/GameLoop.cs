@@ -37,20 +37,7 @@ namespace Codename_Battlecruiser.Engine.Base
         {
             Render.window.DispatchEvents();
 
-            GetInput();
-
-            UpdateGameObjects();
-
-            Render.RenderWindow();
-        }
-        private void GetInput()
-        {
-            /*foreach (var controller in Game.Instance.GameObjectsList.PlayerControllers)
-                controller.GetInput();*/
-        }
-        private void UpdateGameObjects()
-        {
-
+            Render.UpdateRender();
         }
         public static GameLoop InitGameLoop()
         {

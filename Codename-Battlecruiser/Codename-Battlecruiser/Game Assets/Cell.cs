@@ -24,16 +24,21 @@ namespace Codename_Battlecruiser.Game_Assets
         public void CreateShip()
         {
             IsOccupied = true;
-            IsShip = true;
+            IsShip = true;  
 
             CellState = CellState.Ship;
         }
         public void DestroyCell()
         {
-            IsShip = false;
-            IsDestroyed = true;
+            HpCount--;
 
-            CellState = CellState.Destroyed;
+            if(HpCount <= 0)
+            {
+                IsShip = false;
+                IsDestroyed = true;
+                CellState = CellState.Destroyed;
+            }
+
         }
     }
 }
