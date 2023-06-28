@@ -3,11 +3,18 @@ using Codename_Battlecruiser.Game_Assets;
 using System.Runtime.CompilerServices;
 using System.Text;
 
+public enum PlayerTurn
+{
+    Player1,
+    Player2,
+    Draw,
+}
 namespace Codename_Battlecruiser.Engine.Base
 {
     public class GameLoop
     {
         private Game game = new Game();
+
 
         private static string pathToDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\AAAGR.io";
 
@@ -35,6 +42,8 @@ namespace Codename_Battlecruiser.Engine.Base
         }
         private void DoGameStep()
         {
+            game.DoGameUpdate();
+
             Render.window.DispatchEvents();
 
             Render.UpdateRender();

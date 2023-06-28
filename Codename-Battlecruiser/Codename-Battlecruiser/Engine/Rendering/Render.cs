@@ -56,29 +56,38 @@ namespace Codename_Battlecruiser.Engine.Rendering
             {
                 Color.Green, 
                 Color.Red, 
-                Color.Blue,
+                Color.Yellow,
+            };
+            List<string> labels = new List<string>
+            {
+                "ATA",
+                "Yamato cannon",
+                "''Hellstorm'' rockets",
             };
 
-            int colorIndex = 0;
+
+            int buttonIndex = 0;
 
             foreach (ShootType type in Enum.GetValues(typeof(ShootType)))
             {
-                CreateButton(startPosition, type, colors[colorIndex]);
+                CreateButton(startPosition, type, colors[buttonIndex], labels[buttonIndex]);
 
-                colorIndex++;
+                buttonIndex++;
 
                 startPosition.Y += 200;
             }
         }
-        private static void CreateButton(Vector2f position, ShootType shootType, Color color)
+        private static void CreateButton(Vector2f position, ShootType shootType, Color color, string message)
         {
-            Button button = new Button(true, new Vector2f(100, 45));
+            Button button = new Button(true, new Vector2f(200, 75), true);
 
-            button.ButtonShape.Position = position;
+            button.SetNewPosition(position);
 
             button.ChangeFillColor(color);
 
             button.OnButtonPressed += Game.Instance.Player1.ShootEnemyCell;
+
+            button.ChangeText(message);
 
             ControlButtons.Add(shootType, button);
         }
@@ -216,7 +225,10 @@ namespace Codename_Battlecruiser.Engine.Rendering
         private static void DrawControlButtons(Dictionary<ShootType, Button> buttons)
         {
             foreach (var button in buttons.Values)
+            {
                 window.Draw(button.ButtonShape);
+                window.Draw(button.Label);
+            }
         }
         #endregion
 
