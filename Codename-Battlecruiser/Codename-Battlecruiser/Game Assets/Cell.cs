@@ -28,17 +28,24 @@ namespace Codename_Battlecruiser.Game_Assets
 
             CellState = CellState.Ship;
         }
-        public void DestroyCell()
+        public void DestroyCell(int damage)
         {
-            HpCount--;
-
-            if(HpCount <= 0)
+            if(IsShip)
             {
-                IsShip = false;
+                HpCount -= damage;
+
+                if (HpCount <= 0)
+                {
+                    IsShip = false;
+                    IsDestroyed = true;
+                    CellState = CellState.Destroyed;
+                }
+            }
+            else
+            {
                 IsDestroyed = true;
                 CellState = CellState.Destroyed;
             }
-
         }
     }
 }

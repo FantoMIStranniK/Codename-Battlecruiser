@@ -5,18 +5,30 @@ using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
+public enum ShootType
+{
+    ShootATA = 2,
+    Yamato = 3,
+    Hellstorm = 1
+}
 namespace Codename_Battlecruiser.Engine.Rendering
 {
     public static class Render
     {
+        #region Parameters
         public static RenderWindow window;
         public static uint wantedFrameRate = 144;
 
         public static uint width = 1000;
         public static uint height = 1000;
+        #endregion
 
         private static Button[,] Field = new Button[Cells.fieldSize, Cells.fieldSize];
         private static Button[,] VisibleField = new Button[Cells.fieldSize, Cells.fieldSize];
+
+        private static Dictionary<ShootType, Button> ControlButtons = new Dictionary<ShootType, Button>();
+
+        private static Button previousButton;
 
         #region Init
         public static void InitRender()
@@ -26,6 +38,8 @@ namespace Codename_Battlecruiser.Engine.Rendering
             window.SetFramerateLimit(wantedFrameRate);
 
             InitFields();
+
+            InitControlButtons();
         }
         private static void InitFields()
         {
@@ -34,13 +48,47 @@ namespace Codename_Battlecruiser.Engine.Rendering
 
             BindActions();
         }
+        private static void InitControlButtons()
+        {
+            Vector2f startPosition = new Vector2f(750, 250);
+
+            List<Color> colors = new List<Color>
+            {
+                Color.Green, 
+                Color.Red, 
+                Color.Blue,
+            };
+
+            int colorIndex = 0;
+
+            foreach (ShootType type in Enum.GetValues(typeof(ShootType)))
+            {
+                CreateButton(startPosition, type, colors[colorIndex]);
+
+                colorIndex++;
+
+                startPosition.Y += 200;
+            }
+        }
+        private static void CreateButton(Vector2f position, ShootType shootType, Color color)
+        {
+            Button button = new Button(true, new Vector2f(100, 45));
+
+            button.ButtonShape.Position = position;
+
+            button.ChangeFillColor(color);
+
+            button.OnButtonPressed += Game.Instance.Player1.ShootEnemyCell;
+
+            ControlButtons.Add(shootType, button);
+        }
         private static void BindActions()
         {
             for(int i = 0; i < Cells.fieldSize; i++)
             {
                 for(int j = 0; j < Cells.fieldSize; j++)
                 {
-                    VisibleField[i, j].OnButtonPressed += () => Game.Instance.Player1.ShootEnemyCell(new Vector2i(i, j));
+                    VisibleField[i, j].OnButtonPressed += Game.Instance.Player1.ChooseShootCoordinate;
                 }
             }
         }
@@ -48,25 +96,25 @@ namespace Codename_Battlecruiser.Engine.Rendering
         {
             Button[,] buttons = new Button[Cells.fieldSize, Cells.fieldSize];
 
-            float cordX = 100;
+            float cordX = 110;
             float cordY = yOffset;
 
             for(int i = 0; i < Cells.fieldSize; i++)
             {
                 for(int j = 0; j < Cells.fieldSize; j++)
                 {
-                    buttons[i, j] = new Button(isInteractable);
+                    buttons[i, j] = new Button(isInteractable, new Vector2f(22.5f, 22.5f));
 
                     buttons[i, j].SetNewPosition(new Vector2f(cordX, cordY));
 
-                    cordX += 24.5f;
+                    cordX += 26.5f;
                 }
 
-                cordX = 100;
-                cordY += 24.5f;
+                cordX = 110;
+                cordY += 26.5f;
             }
 
-            buttons.FetchMap(cells);
+            buttons.FetchMap(cells, false);
 
             return buttons;
         }
@@ -82,25 +130,38 @@ namespace Codename_Battlecruiser.Engine.Rendering
 
             VisibleField.TryPressButtons();
 
+            ControlButtons.TryPressControls();
+
             window.Display();
+        }
+        private static void TryPressControls(this Dictionary<ShootType, Button> buttons)
+        {
+            foreach (var type in buttons.Keys)
+                buttons[type].TryPressButton(new Vector2i((int)type, 0));
         }
         private static void TryPressButtons(this Button[,] buttons)
         {
-            foreach(var button in buttons)
-                button.TryPressButton();
+            for (int i = 0; i < Cells.fieldSize; i++)
+            {
+                for (int j = 0; j < Cells.fieldSize; j++)
+                {
+                    VisibleField[i, j].TryPressButton(new Vector2i(i, j));
+                }
+            }
         }
+
         #region Drawing
         private static void DrawGameObjects()
         {
-            Field.FetchMap(Game.Instance.Player1.PlayerMaps.Map);
-            VisibleField.FetchMap(Game.Instance.Player1.PlayerMaps.VisibleCells);
+            Field.FetchMap(Game.Instance.Player1.PlayerMaps.Map, false);
+            VisibleField.FetchMap(Game.Instance.Player1.PlayerMaps.VisibleCells, true);
 
-            VisibleField[0, 0].ButtonShape.FillColor = Color.Red;
+            DrawField(VisibleField);
+            DrawField(Field);
 
-            DrawButtons(VisibleField);
-            DrawButtons(Field);
+            DrawControlButtons(ControlButtons);
         }
-        private static Button[,] FetchMap(this Button[,] _buttons, Cell[,] fetched)
+        private static Button[,] FetchMap(this Button[,] _buttons, Cell[,] fetched, bool isVisibleMap)
         {
             Button[,] buttons = _buttons;
 
@@ -109,6 +170,20 @@ namespace Codename_Battlecruiser.Engine.Rendering
                 for (int j = 0; j < Cells.fieldSize; j++)
                 {
                     buttons[i, j].ButtonShape.FillColor = GetCellColor(fetched[i, j]);
+
+                    if (isVisibleMap && new Vector2i(i, j) == Game.Instance.Player1.chosenCoordinates)
+                    {
+                        if(previousButton != null)
+                            previousButton.ButtonShape.OutlineColor = Color.White;
+
+                        previousButton = buttons[i, j];
+
+                        previousButton.ButtonShape.OutlineColor = Color.Black;
+                    }
+                    else if (isVisibleMap && Game.Instance.Player1.chosenCoordinates == null)
+                    {
+                        buttons[i, j].ButtonShape.OutlineColor = Color.White;
+                    }
                 }
             }
 
@@ -116,14 +191,11 @@ namespace Codename_Battlecruiser.Engine.Rendering
         }
         private static Color GetCellColor(Cell cell)
         {
-            if(!cell.IsOccupied)
-                return Color.Cyan;
-
-            if(cell.IsShip)
-                return Color.Green;
-
             if(cell.IsDestroyed)
                 return Color.Red;
+
+            if (!cell.IsOccupied)
+                return Color.Cyan;
 
             return cell.HpCount switch
             { 
@@ -132,13 +204,18 @@ namespace Codename_Battlecruiser.Engine.Rendering
                 3 => Color.Yellow,
                 4 => Color.Yellow,
                 5 => Color.Green,
-                6 => Color.White,
+                6 => Color.Green,
                 _ => Color.Black,
             };
         }
-        private static void DrawButtons(Button[,] buttons)
+        private static void DrawField(Button[,] field)
         {
-            foreach(var button in buttons)
+            foreach(var cell in field)
+                window.Draw(cell.ButtonShape);
+        }
+        private static void DrawControlButtons(Dictionary<ShootType, Button> buttons)
+        {
+            foreach (var button in buttons.Values)
                 window.Draw(button.ButtonShape);
         }
         #endregion

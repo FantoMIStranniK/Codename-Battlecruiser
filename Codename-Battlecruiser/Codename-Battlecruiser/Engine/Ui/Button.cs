@@ -7,33 +7,42 @@ namespace Codename_Battlecruiser.Engine.Ui
 {
     public class Button
     {
-        public Action OnButtonPressed = new Action(() => { });
+        public Action<Vector2i> OnButtonPressed;
 
         public Shape ButtonShape;
 
-        private Vector2f buttonSize = new Vector2f(22.5f, 22.5f);
-
         private bool isInteractable = true;
 
-        public Button(bool isInteractable)
+        private float cooldown = 0f;
+
+        public Button(bool isInteractable, Vector2f buttonSize)
         {
             ButtonShape = new RectangleShape(buttonSize);
+            ButtonShape.OutlineThickness = 2;
             this.isInteractable = isInteractable;
         }
         public void SetNewPosition(Vector2f newPosition)
             => ButtonShape.Position = newPosition;
         public void ChangeFillColor(Color color)
             => ButtonShape.FillColor = color;
-        public void TryPressButton()
+        public void TryPressButton(Vector2i position)
         {
             if (!isInteractable)
                 return;
+
+            if(cooldown <= 10f)
+            {
+                cooldown += Time.GetTime();
+                return;
+            }
 
             if (!IsMouseOver())
                 return;
 
             if (Mouse.IsButtonPressed(Mouse.Button.Left))
-                OnButtonPressed.Invoke();
+                OnButtonPressed.Invoke(position);
+
+            cooldown = 0;
         }
         private bool IsMouseOver()
         {
